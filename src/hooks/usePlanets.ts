@@ -3,8 +3,6 @@ import PlanetsService from 'services/planets.service';
 
 const planetsService = new PlanetsService();
 
-interface Kontol {}
-
 const useFetchInfinitePlanets = () => {
   return useInfiniteQuery({
     queryKey: ['planets'],
