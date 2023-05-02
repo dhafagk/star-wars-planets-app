@@ -1,9 +1,10 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
-import Image from 'next/image';
 import styled from 'styled-components';
-import styles from '../styles/Home.module.css';
 import { useFetchInfinitePlanets } from 'hooks/usePlanets';
+import { useCallback, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { PlanetProps } from 'types/planets.type';
 
 const Container = styled.div`
   background: #242425;
@@ -12,13 +13,29 @@ const Container = styled.div`
 
 const MainStyled = styled.main`
   align-items: center;
-  color: #fff;
+  color: #999;
   display: flex;
   flex: 1;
   flex-direction: column;
   justify-content: center;
+  margin: 0 auto;
   min-height: 100vh;
   padding: 4rem 0;
+  width: 960px;
+`;
+
+const Card = styled.a`
+  background: #1b1b1b;
+  background-clip: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 16px;
+  position: relative;
+  word-wrap: break-word;
 `;
 
 const Footer = styled.footer`
@@ -32,7 +49,43 @@ const Footer = styled.footer`
 `;
 
 const Home: NextPage = () => {
-  // const { data } = useFetchInfinitePlanets();
+  const observerElem = useRef(null);
+
+  const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useFetchInfinitePlanets();
+
+  const handleObserver = useCallback(
+    (entries) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage]
+  );
+
+  useEffect(() => {
+    const element = observerElem.current;
+    const option = { threshold: 0 };
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, option);
+    observer.observe(element);
+    return () => observer.unobserve(element);
+  }, [fetchNextPage, hasNextPage, handleObserver]);
+
+  const linkToThePlanet = (url: string) => {
+    const id = url
+      .split('/')
+      .filter((item) => item)
+      .at(-1);
+    const goto = `/planet/${id}`;
+    return goto;
+  };
+
+  if (isLoading) return <>Loading...</>;
+
   return (
     <Container>
       <Head>
@@ -42,36 +95,38 @@ const Home: NextPage = () => {
       </Head>
 
       <MainStyled>
-        <h1 className="text-5xl font-bold text-yellow-500">STAR WARS</h1>
+        <h1 className="text-5xl font-bold text-yellow-600">STAR WARS</h1>
 
-        {/* <p className={styles.description} test-id="getting started">
-          Get started by editing <code className={styles.code}>pages/index.tsx</code>
-        </p>
+        <div className="flex gap-5 text-xl pt-5">
+          <h2 className="text-white">Home</h2>
+          <Link href="/wishlist">Wishlist</Link>
+        </div>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+        <h5 className="w-full text-2xl py-5">Planets</h5>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+        <div className="w-full">
+          {data?.pages[0].results.length ? (
+            <>
+              {data?.pages.map((page: any) =>
+                page.results.map((planet: PlanetProps, index: number) => (
+                  <Link href={linkToThePlanet(planet.url)} key={index} passHref>
+                    <Card>
+                      <h2 className="text-yellow-500 text-xl">{planet.name}</h2>
+                      <p>Population - {planet.population}</p>
+                      <p>Terrain - {planet.terrain}</p>
+                    </Card>
+                  </Link>
+                ))
+              )}
 
-          <a href="https://github.com/vercel/next.js/tree/master/examples" className={styles.card}>
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>Instantly deploy your Next.js site to a public URL with Vercel.</p>
-          </a>
-        </div> */}
+              <div className="text-center text-xl" ref={observerElem}>
+                {isFetchingNextPage && hasNextPage ? <span>Loading planets...</span> : null}
+              </div>
+            </>
+          ) : (
+            <h1>All planets is gone!</h1>
+          )}
+        </div>
       </MainStyled>
 
       <Footer>
