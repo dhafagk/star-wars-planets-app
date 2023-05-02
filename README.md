@@ -6,7 +6,7 @@
 
 #### Kekurangan
 
-- Masih ada beberapa yang menggunakan any
+- Masih ada beberapa yang menggunakan type any
 - Tidak melakukan unit testing
 - Belum menerapkan DRY Code
 - Bug to be expected
